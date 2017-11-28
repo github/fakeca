@@ -148,6 +148,12 @@ func TestChainPool(t *testing.T) {
 	}
 }
 
+func TestPFX(t *testing.T) {
+	assertNoPanic(t, func() {
+		New().PFX("asdf")
+	})
+}
+
 func assertNoPanic(t *testing.T, cb func()) {
 	t.Helper()
 
