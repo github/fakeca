@@ -17,7 +17,7 @@ func TestDefaults(t *testing.T) {
 
 func TestIntermediate(t *testing.T) {
 	assertNoPanic(t, func() {
-		New().Intermediate()
+		New().Issue()
 	})
 }
 
@@ -26,7 +26,7 @@ func TestSubject(t *testing.T) {
 		var (
 			expected = "foobar"
 			root     = New(Subject(pkix.Name{CommonName: expected}))
-			actual   = root.GetCertificate().Subject.CommonName
+			actual   = root.Certificate.Subject.CommonName
 		)
 
 		if actual != expected {
@@ -39,8 +39,8 @@ func TestNextSerialNumber(t *testing.T) {
 	assertNoPanic(t, func() {
 		var (
 			expected = int64(123)
-			ca       = New(NextSerialNumber(expected)).Intermediate()
-			actual   = ca.GetCertificate().SerialNumber.Int64()
+			ca       = New(NextSerialNumber(expected)).Issue()
+			actual   = ca.Certificate.SerialNumber.Int64()
 		)
 
 		if actual != expected {
@@ -54,7 +54,7 @@ func TestPrivateKey(t *testing.T) {
 		var (
 			expected, _ = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 			ca          = New(PrivateKey(expected))
-			actual      = ca.GetPrivateKey().(*ecdsa.PrivateKey)
+			actual      = ca.PrivateKey.(*ecdsa.PrivateKey)
 		)
 
 		if actual.D.Cmp(expected.D) != 0 {
@@ -77,14 +77,29 @@ func TestIssuer(t *testing.T) {
 			root  = New()
 			inter = New(Issuer(root))
 
-			expected = root.GetCertificate().RawSubject
-			actual   = inter.GetCertificate().RawIssuer
+			expected = root.Certificate.RawSubject
+			actual   = inter.Certificate.RawIssuer
 		)
 
 		if !bytes.Equal(actual, expected) {
 			t.Fatalf("bad issuer. expected '%s', got '%s'", string(expected), string(actual))
 		}
 	})
+}
+
+func TestIsCA(t *testing.T) {
+	var (
+		normal = New()
+		ca     = New(IsCA)
+	)
+
+	if normal.Certificate.IsCA {
+		t.Fatal("expected normal cert not to be CA")
+	}
+
+	if !ca.Certificate.IsCA {
+		t.Fatal("expected CA cert to be CA")
+	}
 }
 
 func assertNoPanic(t *testing.T, cb func()) {
