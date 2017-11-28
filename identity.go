@@ -30,8 +30,18 @@ func (id *Identity) Issue(opts ...Option) *Identity {
 	return New(opts...)
 }
 
-// GetChain builds an *x509.CertPool from this CA and its issuers.
-func (id *Identity) GetChain() *x509.CertPool {
+// Chain builds a slice of *x509.Certificate from this CA and its issuers.
+func (id *Identity) Chain() []*x509.Certificate {
+	chain := []*x509.Certificate{}
+	for this := id; this != nil; this = this.Issuer {
+		chain = append(chain, this.Certificate)
+	}
+
+	return chain
+}
+
+// ChainPool builds an *x509.CertPool from this CA and its issuers.
+func (id *Identity) ChainPool() *x509.CertPool {
 	chain := x509.NewCertPool()
 	for this := id; this != nil; this = this.Issuer {
 		chain.AddCert(this.Certificate)

@@ -5,13 +5,18 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/x509"
 	"crypto/x509/pkix"
 	"testing"
 )
 
 func TestDefaults(t *testing.T) {
 	assertNoPanic(t, func() {
-		New()
+		root := New(IsCA)
+
+		if err := root.Certificate.CheckSignatureFrom(root.Certificate); err != nil {
+			t.Fatal(err)
+		}
 	})
 }
 
@@ -74,7 +79,7 @@ func TestPrivateKey(t *testing.T) {
 func TestIssuer(t *testing.T) {
 	assertNoPanic(t, func() {
 		var (
-			root  = New()
+			root  = New(IsCA)
 			inter = New(Issuer(root))
 
 			expected = root.Certificate.RawSubject
@@ -83,6 +88,10 @@ func TestIssuer(t *testing.T) {
 
 		if !bytes.Equal(actual, expected) {
 			t.Fatalf("bad issuer. expected '%s', got '%s'", string(expected), string(actual))
+		}
+
+		if err := inter.Certificate.CheckSignatureFrom(root.Certificate); err != nil {
+			t.Fatal(err)
 		}
 	})
 }
@@ -99,6 +108,43 @@ func TestIsCA(t *testing.T) {
 
 	if !ca.Certificate.IsCA {
 		t.Fatal("expected CA cert to be CA")
+	}
+}
+
+func TestChain(t *testing.T) {
+	var (
+		ca    = New(IsCA)
+		inter = ca.Issue(IsCA)
+		leaf  = inter.Issue()
+	)
+
+	if !leaf.Chain()[0].Equal(leaf.Certificate) {
+		t.Fatal()
+	}
+
+	if !leaf.Chain()[1].Equal(inter.Certificate) {
+		t.Fatal()
+	}
+
+	if !leaf.Chain()[2].Equal(ca.Certificate) {
+		t.Fatal()
+	}
+}
+
+func TestChainPool(t *testing.T) {
+	var (
+		ca    = New(IsCA)
+		inter = ca.Issue(IsCA)
+		leaf  = inter.Issue()
+	)
+
+	_, err := leaf.Certificate.Verify(x509.VerifyOptions{
+		Roots:         ca.ChainPool(),
+		Intermediates: leaf.ChainPool(),
+	})
+
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 

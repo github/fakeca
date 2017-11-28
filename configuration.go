@@ -9,14 +9,17 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"time"
 )
 
 type configuration struct {
-	subject *pkix.Name
-	issuer  *Identity
-	nextSN  *int64
-	priv    *crypto.Signer
-	isCA    bool
+	subject   *pkix.Name
+	issuer    *Identity
+	nextSN    *int64
+	priv      *crypto.Signer
+	isCA      bool
+	notBefore *time.Time
+	notAfter  *time.Time
 }
 
 func (c *configuration) generate() *Identity {
@@ -24,19 +27,27 @@ func (c *configuration) generate() *Identity {
 		Subject: c.getSubject(),
 		IsCA:    c.isCA,
 		BasicConstraintsValid: true,
+		NotAfter:              c.getNotAfter(),
+		NotBefore:             c.getNotBefore(),
 	}
 
-	var parent *x509.Certificate
+	var (
+		parent   *x509.Certificate
+		thisPriv = c.getPrivateKey()
+		priv     crypto.Signer
+	)
+
 	if c.issuer != nil {
 		parent = c.issuer.Certificate
 		templ.SerialNumber = big.NewInt(c.issuer.IncrementSN())
+		priv = c.issuer.PrivateKey
 	} else {
 		parent = templ
 		templ.SerialNumber = randSN()
+		priv = thisPriv
 	}
 
-	priv := c.getPrivateKey()
-	der, err := x509.CreateCertificate(rand.Reader, templ, parent, priv.Public(), priv)
+	der, err := x509.CreateCertificate(rand.Reader, templ, parent, thisPriv.Public(), priv)
 	if err != nil {
 		panic(err)
 	}
@@ -48,7 +59,7 @@ func (c *configuration) generate() *Identity {
 
 	return &Identity{
 		Certificate: cert,
-		PrivateKey:  priv,
+		PrivateKey:  thisPriv,
 		Issuer:      c.issuer,
 		NextSN:      c.getNextSN(),
 	}
@@ -132,11 +143,27 @@ func (c *configuration) getPrivateKey() crypto.Signer {
 	return *c.priv
 }
 
+func (c *configuration) getNotBefore() time.Time {
+	if c.notBefore == nil {
+		return time.Unix(0, 0)
+	}
+
+	return *c.notBefore
+}
+
+func (c *configuration) getNotAfter() time.Time {
+	if c.notAfter == nil {
+		return time.Now().Add(time.Hour * 24 * 365 * 10)
+	}
+
+	return *c.notAfter
+}
+
 // Option is an option that can be passed to New().
 type Option option
 type option func(c *configuration)
 
-// Subject is an Option that sets a CA's subject field.
+// Subject is an Option that sets a identity's subject field.
 func Subject(value pkix.Name) Option {
 	return func(c *configuration) {
 		c.subject = &value
@@ -151,21 +178,35 @@ func NextSerialNumber(value int64) Option {
 	}
 }
 
-// PrivateKey is an Option for setting the CA's private key.
+// PrivateKey is an Option for setting the identity's private key.
 func PrivateKey(value crypto.Signer) Option {
 	return func(c *configuration) {
 		c.priv = &value
 	}
 }
 
-// Issuer is an Option for setting the CA's issuer.
+// Issuer is an Option for setting the identity's issuer.
 func Issuer(value *Identity) Option {
 	return func(c *configuration) {
 		c.issuer = value
 	}
 }
 
-// IsCA is an Option for making a CA a certificate authority.
+// NotBefore is an Option for setting the identity's certificate's NotBefore.
+func NotBefore(value time.Time) Option {
+	return func(c *configuration) {
+		c.notBefore = &value
+	}
+}
+
+// NotAfter is an Option for setting the identity's certificate's NotAfter.
+func NotAfter(value time.Time) Option {
+	return func(c *configuration) {
+		c.notAfter = &value
+	}
+}
+
+// IsCA is an Option for making an identity a certificate authority.
 var IsCA Option = func(c *configuration) {
 	c.isCA = true
 }
