@@ -155,7 +155,10 @@ func TestPFX(t *testing.T) {
 }
 
 func assertNoPanic(t *testing.T, cb func()) {
-	t.Helper()
+	// Check that t.Helper() is defined for Go<1.9
+	if h, ok := interface{}(t).(interface{ Helper() }); ok {
+		h.Helper()
+	}
 
 	defer func() {
 		if r := recover(); r != nil {
