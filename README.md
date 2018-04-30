@@ -7,31 +7,38 @@ This is a package for creating fake certificate authorities for test fixtures.
 ```go
 package main
 
-// Change defaults for cert subjects.
-fakeca.DefaultProvince = "CO"
-fakeca.DefaultLocality = "Denver"
+import (
+	"crypto/x509/pkix"
 
-func main () {
-  // Create a root CA.
-  root := fakeca.New(fakeca.IsCA, fakeca.Subject(pkix.Name{
-    CommonName:   "root.myorg.com",
-  }))
+	"github.com/mastahyeti/fakeca"
+)
 
-  // Create an intermediate CA under the root.
-  intermediate := root.Issue(fakeca.IsCA, fakeca.Subject(pkix.Name{
-    CommonName:   "intermediate.myorg.com",
-  }))
+func main() {
+	// Change defaults for cert subjects.
+	fakeca.DefaultProvince = []string{"CO"}
+	fakeca.DefaultLocality = []string{"Denver"}
 
-  // Create a leaf certificate under the intermediate.
-  leaf := intermediate.Issue(fakeca.Subject(pkix.Name{
-    CommonName:   "leaf.myorg.com",
-  }))
+	// Create a root CA.
+	root := fakeca.New(fakeca.IsCA, fakeca.Subject(pkix.Name{
+		CommonName: "root.myorg.com",
+	}))
 
-  // Get PFX (PKCS12) blob containing certificate and encrypted private key.
-  leafPFX := leaf.PFX("pa55w0rd")
+	// Create an intermediate CA under the root.
+	intermediate := root.Issue(fakeca.IsCA, fakeca.Subject(pkix.Name{
+		CommonName: "intermediate.myorg.com",
+	}))
 
-  // Get an *x509.CertPool containing certificate chain from CA to leaf for use
-  // with Go's TLS libraries.
-  leafPool := leaf.ChainPool()
+	// Create a leaf certificate under the intermediate.
+	leaf := intermediate.Issue(fakeca.Subject(pkix.Name{
+		CommonName: "leaf.myorg.com",
+	}))
+
+	// Get PFX (PKCS12) blob containing certificate and encrypted private key.
+	leafPFX := leaf.PFX("pa55w0rd")
+
+	// Get an *x509.CertPool containing certificate chain from CA to leaf for use
+	// with Go's TLS libraries.
+	leafPool := leaf.ChainPool()
 }
+
 ```
