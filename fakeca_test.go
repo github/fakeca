@@ -181,3 +181,15 @@ func assertNoPanic(t *testing.T, cb func()) {
 
 	cb()
 }
+
+func TestKeyUsage(t *testing.T) {
+	root := New(IsCA, KeyUsage(x509.KeyUsageCertSign))
+	if root.Certificate.KeyUsage != x509.KeyUsageCertSign {
+		t.Fatalf("expected %x, got %d", x509.KeyUsageCertSign, root.Certificate.KeyUsage)
+	}
+
+	leaf := root.Issue(KeyUsage(x509.KeyUsageDataEncipherment | x509.KeyUsageDigitalSignature))
+	if leaf.Certificate.KeyUsage != x509.KeyUsageDataEncipherment|x509.KeyUsageDigitalSignature {
+		t.Fatalf("expected %x, got %d", x509.KeyUsageDataEncipherment|x509.KeyUsageDigitalSignature, leaf.Certificate.KeyUsage)
+	}
+}

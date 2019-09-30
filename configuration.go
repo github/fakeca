@@ -22,17 +22,19 @@ type configuration struct {
 	notAfter              *time.Time
 	issuingCertificateURL []string
 	ocspServer            []string
+	keyUsage              x509.KeyUsage
 }
 
 func (c *configuration) generate() *Identity {
 	templ := &x509.Certificate{
-		Subject: c.getSubject(),
-		IsCA:    c.isCA,
+		Subject:               c.getSubject(),
+		IsCA:                  c.isCA,
 		BasicConstraintsValid: true,
 		NotAfter:              c.getNotAfter(),
 		NotBefore:             c.getNotBefore(),
 		IssuingCertificateURL: c.issuingCertificateURL,
 		OCSPServer:            c.ocspServer,
+		KeyUsage:              c.keyUsage,
 	}
 
 	var (
@@ -222,6 +224,13 @@ func IssuingCertificateURL(value ...string) Option {
 func OCSPServer(value ...string) Option {
 	return func(c *configuration) {
 		c.ocspServer = append(c.ocspServer, value...)
+	}
+}
+
+// KeyUsage is an Option for setting the identity's certificate's KeyUsage.
+func KeyUsage(ku x509.KeyUsage) Option {
+	return func(c *configuration) {
+		c.keyUsage = ku
 	}
 }
 
