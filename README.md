@@ -1,4 +1,4 @@
-# fakeca [![GoDoc](https://godoc.org/github.com/github/fakeca?status.svg)](http://godoc.org/github.com/github/fakeca) [![Report card](https://goreportcard.com/badge/github.com/github/fakeca)](https://goreportcard.com/report/github.com/github/fakeca) [![Travis CI](https://travis-ci.org/github/fakeca.svg?branch=main)](https://travis-ci.org/github/github/fakeca)
+# fakeca [![GoDoc](https://godoc.org/github.com/github/fakeca?status.svg)](http://godoc.org/github.com/github/fakeca) [![Report card](https://goreportcard.com/badge/github.com/github/fakeca)](https://goreportcard.com/report/github.com/github/fakeca) [![Actions CI](https://github.com/github/fakeca/workflows/Test/badge.svg)](https://github.com/github/fakeca/actions?query=workflow%3ATest)
 
 This is a package for creating fake certificate authorities for test fixtures.
 
