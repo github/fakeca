@@ -1,4 +1,4 @@
-# fakeca [![GoDoc](https://godoc.org/github.com/mastahyeti/fakeca?status.svg)](http://godoc.org/github.com/mastahyeti/fakeca) [![Report card](https://goreportcard.com/badge/github.com/mastahyeti/fakeca)](https://goreportcard.com/report/github.com/mastahyeti/fakeca) [![Travis CI](https://travis-ci.org/mastahyeti/fakeca.svg?branch=master)](https://travis-ci.org/mastahyeti/fakeca)
+# fakeca [![GoDoc](https://godoc.org/github.com/github/fakeca?status.svg)](http://godoc.org/github.com/github/fakeca) [![Report card](https://goreportcard.com/badge/github.com/github/fakeca)](https://goreportcard.com/report/github.com/github/fakeca) [![Travis CI](https://travis-ci.org/github/fakeca.svg?branch=master)](https://travis-ci.org/github/fakeca)
 
 This is a package for creating fake certificate authorities for test fixtures.
 
@@ -10,7 +10,7 @@ package main
 import (
 	"crypto/x509/pkix"
 
-	"github.com/mastahyeti/fakeca"
+	"github.com/github/fakeca"
 )
 
 func main() {
